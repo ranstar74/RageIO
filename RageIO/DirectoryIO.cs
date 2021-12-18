@@ -12,18 +12,20 @@ namespace RageIO
 
     public sealed class DirectoryIO : RageIO
     {
-        public DirectoryIOType DirectoryType => _dirType;
+        public DirectoryIO Parent { get; }
 
-        private readonly DirectoryIOType _dirType;
+        public DirectoryIOType DirectoryType { get; }
 
         internal DirectoryIO(Entry entry) : base(entry)
         {
-            _dirType = GetDirType();
+            DirectoryType = GetDirType();
+            Parent = GetParent();
         }
 
         public DirectoryIO(string path) : base(path)
         {
-            _dirType = GetDirType();
+            DirectoryType = GetDirType();
+            Parent = GetParent();
         }
 
         private DirectoryIOType GetDirType()
@@ -39,6 +41,16 @@ namespace RageIO
                 default:
                     throw new NotSupportedException($"Type: {_entry.GetType()} is not supported.");
             }
+        }
+
+        private DirectoryIO GetParent()
+        {
+            if (_entry.Parent == null)
+            {
+                return null;
+            }
+
+            return new DirectoryIO(_entry.Parent);
         }
     }
 }

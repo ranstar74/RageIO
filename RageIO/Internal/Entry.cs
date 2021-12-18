@@ -1,6 +1,7 @@
 ﻿using CodeWalker.GameFiles;
 using System;
 using System.IO;
+using System.Linq;
 using System.Text;
 
 namespace RageIO.Internal
@@ -20,6 +21,16 @@ namespace RageIO.Internal
 
         public abstract void Create();
         public abstract void Delete();
+    }
+
+    internal abstract class FileEntry : Entry
+    {
+        public FileEntry(string path, Entry parent = null) : base(path, parent)
+        {
+
+        }
+
+        public abstract Stream Open();
     }
 
     internal static class EntryFactory
@@ -53,14 +64,28 @@ namespace RageIO.Internal
                 }
                 else
                 {
-                    // *.RPF Directory
+                    // *.RPF Directory / File
                     if (isInRpf)
                     {
-                        entry = new RageDirectory(currPathStr, rpfPath, prevEntry);
+                        if(Path.HasExtension(segment))
+                        {
+                            entry = new RageFile(currPathStr, prevEntry);
+                        }
+                        else
+                        {
+                            entry = new RageDirectory(currPathStr, rpfPath, prevEntry);
+                        }
                     }
-                    else // Win Directory
+                    else // Win Directory / File
                     {
-                        entry = new WinDirectory(currPathStr, prevEntry);
+                        if (Path.HasExtension(segment))
+                        {
+                            entry = new WinFile(currPathStr, prevEntry);
+                        }
+                        else
+                        {
+                            entry = new WinDirectory(currPathStr, prevEntry);
+                        }
                     }
                 }
                 prevEntry = entry;
@@ -79,6 +104,8 @@ namespace RageIO.Internal
             {
                 string newPath = System.IO.Path.Combine(Parent.Path, value);
                 _dirInfo.MoveTo(newPath);
+
+                Path = newPath;
             }
         }
 
@@ -225,48 +252,128 @@ namespace RageIO.Internal
     }
 
     // Windows files
-    internal class WinFile : Entry
+    internal class WinFile : FileEntry
     {
-        public override string Name { get => throw new System.NotImplementedException(); set => throw new System.NotImplementedException(); }
+        public override string Name
+        {
+            get => _fileInfo.Name;
+            set
+            {
+                string newPath = System.IO.Path.Combine(Parent.Path, value);
+                _fileInfo.MoveTo(newPath);
 
-        public override bool Exists => throw new System.NotImplementedException();
+                Path = newPath;
+            }
+        }
+        public override bool Exists => _fileInfo.Exists;
+
+        private readonly FileInfo _fileInfo;
 
         public WinFile(string path, Entry parent) : base(path, parent)
         {
-
+            _fileInfo = new FileInfo(path);
         }
 
         public override void Create()
         {
-            throw new System.NotImplementedException();
+            if(!Parent.Exists)
+            {
+                Parent.Create();
+            }
+
+            _fileInfo.Create();
         }
 
         public override void Delete()
         {
-            throw new System.NotImplementedException();
+            _fileInfo.Delete();
+        }
+
+        public override Stream Open()
+        {
+            return _fileInfo.Open(FileMode.OpenOrCreate, FileAccess.ReadWrite);
         }
     }
 
     // Files inside .RPF archive
-    internal class RageFile : Entry
+    internal class RageFile : FileEntry
     {
-        public override string Name { get => throw new System.NotImplementedException(); set => throw new System.NotImplementedException(); }
+        public override string Name
+        {
+            get => System.IO.Path.GetFileName(Path);
+            set
+            {
+                if (!Exists)
+                    return;
 
-        public override bool Exists => throw new System.NotImplementedException();
+                RpfFile.RenameEntry(RpfFileEntry, value);
+
+                string newPath = System.IO.Path.Combine(Parent.Path, value);
+                Path = newPath;
+            }
+        }
+
+        public override bool Exists => RpfFileEntry != null;
+
+        internal RpfDirectoryEntry RpfRootDirectory;
+        internal RpfFileEntry RpfFileEntry;
 
         public RageFile(string path, Entry parent) : base(path, parent)
         {
-
+            RpfRootDirectory = GetRootDir();
+            RpfFileEntry = GetThisFile();
         }
 
         public override void Create()
         {
-            throw new System.NotImplementedException();
+            if (!Parent.Exists)
+            {
+                Parent.Create();
+
+                RpfRootDirectory = GetRootDir();
+            }
+
+            RpfFileEntry = RpfFile.CreateFile(RpfRootDirectory, Name, new byte[0], false);
         }
 
         public override void Delete()
         {
-            throw new System.NotImplementedException();
+            if (!Exists)
+                return;
+
+            RpfFile.DeleteEntry(RpfFileEntry);
+        }
+
+        private RpfDirectoryEntry GetRootDir()
+        {
+            return CwHelpers.GetArchiveDirectory(Parent, Parent.Path);
+        }
+
+        private RpfFileEntry GetThisFile()
+        {
+            if (RpfRootDirectory == null)
+                return null;
+
+            var files = RpfRootDirectory.Files.Where(f => f.Name == Name);
+            if (files.Count() == 0)
+                return null;
+
+            return files.First();
+        }
+
+        public override Stream Open()
+        {
+            if(!Exists)
+            {
+                Create();
+            }
+
+            return new RageStream(this);
+        }
+
+        internal void RefreshFile()
+        {
+            RpfFileEntry = GetThisFile();
         }
     }
 }

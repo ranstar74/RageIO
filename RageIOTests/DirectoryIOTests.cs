@@ -1,5 +1,6 @@
 ﻿using Microsoft.VisualStudio.TestTools.UnitTesting;
 using System.IO;
+using System.Text;
 
 namespace RageIO.Tests
 {
@@ -156,6 +157,75 @@ namespace RageIO.Tests
             DirectoryIO newDir = new DirectoryIO(pathTo);
 
             Assert.IsTrue(newDir.Exists);
+        }
+        #endregion
+
+        #region WINFILE
+        [TestMethod]
+        public void WinFile_Creates()
+        {
+            string path = Path.Combine(_testDir, "FooBar.txt");
+            FileIO file = new FileIO(path);
+
+            file.Create();
+
+            Assert.IsTrue(file.Exists);
+        }
+
+        [TestMethod]
+        public void WinFile_StreamWriteRead()
+        {
+            string path = Path.Combine(_testDir, "Foo.txt");
+            string data = "Hello World!";
+            FileIO file = new FileIO(path);
+
+            using (StreamWriter sw = new StreamWriter(file.Open()))
+            {
+                sw.Write(data);
+            }
+
+            string readData;
+            using(StreamReader sr = new StreamReader(file.Open()))
+            {
+                readData = sr.ReadToEnd();
+            }
+
+            Assert.AreEqual(data, readData);
+        }
+        #endregion
+
+        #region RAGEFILE
+        [TestMethod]
+        public void RageFile_Creates()
+        {
+            string path = Path.Combine(_testDir, "Rage.rpf\\FooBar.txt");
+            FileIO file = new FileIO(path);
+
+            file.Create();
+
+            Assert.IsTrue(file.Exists);
+        }
+
+        [TestMethod]
+        public void RageFile_StreamWriteRead()
+        {
+            string path = Path.Combine(_testDir, "Rage.rpf\\Foo.txt");
+            string text = "Hello World!";
+            FileIO file = new FileIO(path);
+
+            using(StreamWriter sw = new StreamWriter(file.Open()))
+            {
+                sw.Write(text);
+                sw.Flush();
+            }
+
+            string readData;
+            using (StreamReader sr = new StreamReader(file.Open()))
+            {
+                readData = sr.ReadToEnd();
+            }
+
+            Assert.AreEqual(text, readData);
         }
         #endregion
     }
