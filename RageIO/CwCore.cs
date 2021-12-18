@@ -56,9 +56,12 @@ namespace RageIO
         /// Initializes <see cref="CwCore"/> with given GTA path.
         /// </summary>
         /// <param name="gtaDirectory">Absolute path to GTA directory.</param>
-        public static void Init(string gtaDirectory)
+        public static void Init(string gtaDirectory, bool loadKeys = false)
         {
             _gtaDirectory = gtaDirectory;
+
+            if(loadKeys)
+                GTA5Keys.LoadFromPath(_gtaDirectory);
 
             _rpfManager = new RpfManager();
             _rpfManager.Init(
@@ -68,15 +71,6 @@ namespace RageIO
             _rpfManager.EnableMods = true;
 
             _initialized = true;
-        }
-
-        /// <summary>
-        /// Loads GTA5 AES Keys. 
-        /// Required in order to access most of the game archives.
-        /// </summary>
-        public static void LoadKeys()
-        {
-            GTA5Keys.LoadFromPath(GtaDirectory);
         }
 
         private static void EnsureInitialized()
