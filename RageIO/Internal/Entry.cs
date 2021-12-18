@@ -11,14 +11,11 @@ namespace RageIO.Internal
         public abstract bool Exists { get; }
         public string Path { get; set; }
         public Entry Parent { get; }
-        public bool IsInArchive { get; }
 
-        public Entry(string path, bool isInArchive, Entry parent = null)
+        public Entry(string path, Entry parent = null)
         {
             Path = path;
             Parent = parent;
-
-            IsInArchive = isInArchive;
         }
 
         public abstract void Create();
@@ -59,11 +56,11 @@ namespace RageIO.Internal
                     // *.RPF Directory
                     if (isInRpf)
                     {
-                        entry = new RageDirectory(currPathStr, rpfPath, isInRpf, prevEntry);
+                        entry = new RageDirectory(currPathStr, rpfPath, prevEntry);
                     }
                     else // Win Directory
                     {
-                        entry = new WinDirectory(currPathStr, isInRpf, prevEntry);
+                        entry = new WinDirectory(currPathStr, prevEntry);
                     }
                 }
                 prevEntry = entry;
@@ -89,8 +86,7 @@ namespace RageIO.Internal
 
         private readonly DirectoryInfo _dirInfo;
 
-        public WinDirectory(string path, bool isInArchive, Entry parent)
-            : base(path, isInArchive, parent)
+        public WinDirectory(string path, Entry parent) : base(path, parent)
         {
             _dirInfo = new DirectoryInfo(path);
         }
@@ -134,13 +130,14 @@ namespace RageIO.Internal
         }
 
         public override bool Exists => _rpfFile != null;
+        public bool IsInArchive { get; }
 
         private RpfFile _rpfFile;
 
-        public RageArchive(string path, bool isInArchive, Entry parent)
-            : base(path, isInArchive, parent)
+        public RageArchive(string path, bool isInArchive, Entry parent) : base(path, parent)
         {
             _rpfFile = CwHelpers.GetArchive(Path);
+            IsInArchive = isInArchive;
         }
 
         public override void Create()
@@ -201,8 +198,7 @@ namespace RageIO.Internal
 
         private RpfDirectoryEntry _entry;
 
-        public RageDirectory(string path, string archivePath, bool isInArchive, Entry parent)
-            : base(path, isInArchive, parent)
+        public RageDirectory(string path, string archivePath, Entry parent) : base(path, parent)
         {
             _entry = CwHelpers.GetArchiveDirectory(Parent, Path);
 
@@ -235,8 +231,7 @@ namespace RageIO.Internal
 
         public override bool Exists => throw new System.NotImplementedException();
 
-        public WinFile(string path, bool isInArchive, Entry parent)
-            : base(path, isInArchive, parent)
+        public WinFile(string path, Entry parent) : base(path, parent)
         {
 
         }
@@ -259,8 +254,7 @@ namespace RageIO.Internal
 
         public override bool Exists => throw new System.NotImplementedException();
 
-        public RageFile(string path, bool isInArchive, Entry parent)
-            : base(path, isInArchive, parent)
+        public RageFile(string path, Entry parent) : base(path, parent)
         {
 
         }
