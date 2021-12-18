@@ -30,7 +30,7 @@ namespace RageIO.Internal
 
         }
 
-        public abstract Stream Open();
+        public abstract Stream Open(bool overwrite = false);
     }
 
     internal static class EntryFactory
@@ -289,9 +289,11 @@ namespace RageIO.Internal
             _fileInfo.Delete();
         }
 
-        public override Stream Open()
+        public override Stream Open(bool overwrite = false)
         {
-            return _fileInfo.Open(FileMode.OpenOrCreate, FileAccess.ReadWrite);
+            var mode = overwrite ? FileMode.Create : FileMode.OpenOrCreate;
+
+            return _fileInfo.Open(mode, FileAccess.ReadWrite);
         }
     }
 
@@ -361,14 +363,14 @@ namespace RageIO.Internal
             return files.First();
         }
 
-        public override Stream Open()
+        public override Stream Open(bool overwrite = false)
         {
             if(!Exists)
             {
                 Create();
             }
 
-            return new RageStream(this);
+            return new RageStream(this, overwrite);
         }
 
         internal void RefreshFile()

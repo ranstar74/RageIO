@@ -18,11 +18,11 @@ namespace RageIO
             Parent = GetParent();
         }
 
-        public Stream Open()
+        public Stream Open(bool overwrite = false)
         {
             FileEntry entry = _entry as FileEntry;
 
-            return entry.Open();
+            return entry.Open(overwrite);
         }
 
         private DirectoryIO GetParent()
@@ -41,10 +41,13 @@ namespace RageIO
         private readonly RpfFileEntry _fileEntry;
         private readonly RageFile _rageFile;
 
-        internal RageStream(RageFile rageFile)
+        internal RageStream(RageFile rageFile, bool overwrite)
         {
             _rageFile = rageFile;
             _fileEntry = rageFile.RpfFileEntry;
+
+            if (overwrite)
+                return;
 
             // Write current bytes of this file to stream
             byte[] data = _fileEntry.File.ExtractFile(_fileEntry);
