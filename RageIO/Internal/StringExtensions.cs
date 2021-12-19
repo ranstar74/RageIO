@@ -1,8 +1,9 @@
-﻿using System.IO;
+﻿using System;
+using System.IO;
 
 namespace RageIO.Internal
 {
-    internal static class StringPathExtensions
+    internal static class StringExtensions
     {
         public static string NormalizePath(this string path)
         {
@@ -11,6 +12,11 @@ namespace RageIO.Internal
                 newChar: Path.DirectorySeparatorChar);
 
             return path;
+        }
+
+        public static bool Contains(this string source, string toCheck, StringComparison comp)
+        {
+            return source?.IndexOf(toCheck, comp) >= 0;
         }
     }
 }

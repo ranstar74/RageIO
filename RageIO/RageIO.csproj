@@ -46,7 +46,7 @@
     <Compile Include="DirectoryIO.cs" />
     <Compile Include="Internal\Entry.cs" />
     <Compile Include="FileIO.cs" />
-    <Compile Include="Internal\StringPathExtensions.cs" />
+    <Compile Include="Internal\StringExtensions.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
     <Compile Include="RageIO.cs" />
   </ItemGroup>

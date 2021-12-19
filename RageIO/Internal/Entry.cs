@@ -11,12 +11,47 @@ namespace RageIO.Internal
     {
         public abstract string Name { get; set; }
         public abstract bool Exists { get; }
-        public string Path { get; set; }
+
+        public string FullPath
+        {
+            get => _fullPath;
+            set
+            {
+                if (!value.Contains(CwCore.GtaDirectory, StringComparison.InvariantCultureIgnoreCase))
+                    value = System.IO.Path.Combine(CwCore.GtaDirectory, value);
+
+                _fullPath = value;
+            }
+        }
+
+        public string Path
+        {
+            get
+            {
+                string path = FullPath;
+
+                // Cut path to gta from path
+                if (path.Contains(CwCore.GtaDirectory, StringComparison.InvariantCultureIgnoreCase))
+                {
+                    path = path.Substring(CwCore.GtaDirectory.Length);
+                    path = path.TrimStart(System.IO.Path.DirectorySeparatorChar);
+                }
+
+                return path;
+            }
+            set
+            {
+                FullPath = value;
+            }
+        }
+
         public Entry Parent { get; }
+
+        private string _fullPath;
 
         public Entry(string path, Entry parent = null)
         {
-            Path = path;
+            FullPath = path;
             Parent = parent;
         }
 
@@ -33,6 +68,7 @@ namespace RageIO.Internal
 
         }
     }
+
     internal abstract class FileEntry : Entry
     {
         public FileEntry(string path, Entry parent = null) : base(path, parent)
@@ -131,8 +167,12 @@ namespace RageIO.Internal
                 List<string> dirs = new List<string>();
 
                 // Regular directories
-                dirs.AddRange(Directory
-                    .GetDirectories(_dirInfo.FullName));
+                dirs.AddRange(_dirInfo.GetDirectories().Where(d =>
+                {
+                    return !d.Attributes.HasFlag(FileAttributes.System)
+                        && !d.Attributes.HasFlag(FileAttributes.Hidden)
+                        && !d.Attributes.HasFlag(FileAttributes.Temporary);
+                }).Select(d => d.FullName));
 
                 // Archives
                 dirs.AddRange(Directory
@@ -368,7 +408,7 @@ namespace RageIO.Internal
                 .Where(f => f.Name
                 .ToLower()
                 .Contains(".rpf"))
-                .Select(f => f.Name));
+                .Select(e => e.Name));
 
             return dirs
                 .Select(d => (DirEntry)EntryFactory.Get(d))

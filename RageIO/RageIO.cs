@@ -9,12 +9,6 @@ namespace RageIO
             get => _entry.Name;
             set
             {
-                if (_entry.Parent == null)
-                {
-                    _entry.Name = value;
-                    return;
-                }
-
                 _entry.Name = value;
             }
         }
@@ -22,6 +16,7 @@ namespace RageIO
         public bool Exists => _entry.Exists;
 
         public string Path => _entry.Path;
+        public string FullPath => _entry.FullPath;
 
         internal Entry _entry;
 

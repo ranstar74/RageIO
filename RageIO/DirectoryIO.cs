@@ -1,6 +1,7 @@
 ﻿using RageIO.Internal;
 using System;
 using System.Collections.Generic;
+using System.Diagnostics;
 using System.Linq;
 
 namespace RageIO
@@ -12,6 +13,7 @@ namespace RageIO
         ArchiveDirectory
     }
 
+    [DebuggerDisplay("{ToString()}")]
     public sealed class DirectoryIO : RageIO
     {
         public DirectoryIO Parent { get; }
@@ -21,12 +23,7 @@ namespace RageIO
             get
             {
                 if(_directories == null)
-                {
-                    DirEntry entry = _entry as DirEntry;
-                    _directories = entry.Entries
-                        .Select(e => new DirectoryIO(e))
-                        .ToList();
-                }
+                    ScanDirs();
 
                 return _directories;
             }
@@ -35,6 +32,7 @@ namespace RageIO
         public DirectoryIOType DirectoryType { get; }
 
         private List<DirectoryIO> _directories = null;
+
         internal DirectoryIO(Entry entry) : base(entry)
         {
             DirectoryType = GetDirType();
@@ -45,6 +43,19 @@ namespace RageIO
         {
             DirectoryType = GetDirType();
             Parent = GetParent();
+        }
+
+        private void ScanDirs()
+        {
+            DirEntry entry = _entry as DirEntry;
+            _directories = entry.Entries
+                .Select(e => new DirectoryIO(e))
+                .ToList();
+        }
+
+        public override string ToString()
+        {
+            return Name;
         }
 
         private DirectoryIOType GetDirType()
