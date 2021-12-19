@@ -1,6 +1,7 @@
 ﻿using Microsoft.VisualStudio.TestTools.UnitTesting;
+using System.Collections.Generic;
 using System.IO;
-using System.Text;
+using System.Linq;
 
 namespace RageIO.Tests
 {
@@ -19,7 +20,7 @@ namespace RageIO.Tests
 
         #region WIN
         [TestMethod()]
-        public void DirectoryIO_Creates_SystemDirectory()
+        public void WinEntry_Creates_SystemDirectory()
         {
             string path = Path.Combine(_testDir, "Foo");
             DirectoryIO dir = new DirectoryIO(path);
@@ -27,6 +28,22 @@ namespace RageIO.Tests
             Assert.IsTrue(dir.DirectoryType == DirectoryIOType.SystemDirectory);
         }
         
+        [TestMethod()]
+        public void WinEntry_GetDirectories()
+        {
+            string path = Path.Combine(_testDir, "Foo123");
+            DirectoryIO dir = new DirectoryIO(path + "\\Foo412");
+            DirectoryIO dir2 = new DirectoryIO(path);
+            List<string> dirs = new List<string>()
+            {
+                "Foo412"
+            };
+
+            dir.Create();
+
+            CollectionAssert.AreEquivalent(dirs, dir2.Directories.Select(d => d.Name).ToList());
+        }
+
         [TestMethod()]
         public void WinEntry_Create_CreatesNewDirectory()
         {
@@ -66,12 +83,29 @@ namespace RageIO.Tests
 
         #region RPF
         [TestMethod()]
-        public void DirectoryIO_Creates_Archive()
+        public void RageArchive_Creates_Archive()
         {
             string path = Path.Combine(_testDir, "Foo.rpf");
             DirectoryIO dir = new DirectoryIO(path);
 
             Assert.IsTrue(dir.DirectoryType == DirectoryIOType.Archive);
+        }
+
+        [TestMethod()]
+        public void RageArchive_GetDirectories()
+        {
+            string path = Path.Combine(_testDir, "Foo123.rpf");
+            DirectoryIO dir = new DirectoryIO(path + "\\Foo412");
+            DirectoryIO dir2 = new DirectoryIO(path);
+
+            List<string> dirs = new List<string>()
+            {
+                "Foo412"
+            };
+
+            dir.Create();
+
+            CollectionAssert.AreEquivalent(dirs, dir2.Directories.Select(d => d.Name).ToList());
         }
 
         [TestMethod()]
@@ -114,12 +148,32 @@ namespace RageIO.Tests
 
         #region RPFDIR
         [TestMethod()]
-        public void DirectoryIO_Creates_ArchiveDirectory()
+        public void RageArchiveDirectory_Creates_ArchiveDirectory()
         {
             string path = Path.Combine(_testDir, "FooDir.rpf\\Sample");
             DirectoryIO dir = new DirectoryIO(path);
 
             Assert.IsTrue(dir.DirectoryType == DirectoryIOType.ArchiveDirectory);
+        }
+
+        [TestMethod()]
+        public void RageArchiveDirectory_GetDirectories()
+        {
+            string path = Path.Combine(_testDir, "Foo12.rpf\\Foo123");
+
+            DirectoryIO dir = new DirectoryIO(path + "\\Foo412");
+            DirectoryIO dir2 = new DirectoryIO(path + "\\Foo41.rpf");
+            DirectoryIO dir3 = new DirectoryIO(path);
+            List<string> dirs = new List<string>()
+            {
+                "Foo412",
+                "Foo41.rpf"
+            };
+
+            dir.Create();
+            dir2.Create();
+
+            CollectionAssert.AreEquivalent(dirs, dir3.Directories.Select(d => d.Name).ToList());
         }
 
         [TestMethod()]
